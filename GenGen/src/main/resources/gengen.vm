@@ -1,0 +1,28 @@
+package $packageName;
+
+public class $builderName {
+#foreach( $field in $parameters )
+	private $field.type $field.name;
+#end
+
+	public static $builderName start(){
+		return new $builderName();
+	}
+
+#foreach( $field in $parameters )
+	public $builderName ${field.name}($field.type $field.name){
+		this.$field.name = $field.name;
+		return this;
+	}
+#end
+
+	public $resultClass build(){
+		return new $resultClass(
+#foreach( $field in $parameters )
+			this.${field.name} #if($velocityCount < $parameters.size()), #end
+
+#end
+		);
+
+	}
+}

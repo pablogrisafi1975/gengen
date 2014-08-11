@@ -1,0 +1,27 @@
+package $packageName;
+
+public class $builderName {
+#foreach( $field in $fields )
+	private $field.type $field.name;
+#end
+
+	public static $builderName start(){
+		return new $builderName();
+	}
+
+#foreach( $field in $fields )
+	public $builderName ${field.name}($field.type $field.name){
+		this.$field.name = $field.name;
+		return this;
+	}
+#end
+
+	public $resultClass build(){
+		$resultClass obj = new $resultClass();
+#foreach( $field in $fields )
+		obj.${field.setter}(this.$field.name);
+#end
+		return obj;
+
+	}
+}
