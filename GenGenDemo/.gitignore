@@ -7,3 +7,4 @@ target
 */.settings
 */target
 jubb-core/src/test/tmp
+/target/

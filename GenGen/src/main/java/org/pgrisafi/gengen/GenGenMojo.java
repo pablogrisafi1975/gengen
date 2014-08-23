@@ -1,14 +1,16 @@
 package org.pgrisafi.gengen;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.Arrays;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.pgrisafi.gengen.generator.Generator;
 import org.pgrisafi.gengen.generator.Logger;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
 /**
  * @goal generate-sources
@@ -17,20 +19,12 @@ import org.pgrisafi.gengen.generator.Logger;
 public class GenGenMojo extends AbstractMojo {
 
 	/**
-	 * @parameter expression="${basedir}"
+	 * @parameter property="basedir"
 	 * @required
 	 * @readonly
 	 * @since 1.0
 	 */
-	private File baseDirectory;
-
-	/**
-	 * Sources
-	 * 
-	 * @parameter
-	 * @required
-	 */
-	List<String> sources;
+	private File basedir;
 
 	/**
 	 * @parameter default-value="target/generated-sources/gengen"
@@ -38,37 +32,55 @@ public class GenGenMojo extends AbstractMojo {
 	 */
 	File outputDirectory;
 
+	/** @component */
+	private BuildContext buildContext;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		Generator generator = new Generator();
-		generator.init(new Logger() {
+		generator.setBuildContext(buildContext);
+		Logger logger = new Logger() {
 
 			@Override
 			public void info(String message) {
+				logToFile("INFO:" + message);
 				getLog().debug(message);
 			}
 
 			@Override
 			public void error(String message, Exception ex) {
+				logToFile("ERROR:" + message + ExceptionUtils.getFullStackTrace(ex));
 				getLog().error(message, ex);
 
 			}
 
 			@Override
 			public void error(String message) {
+				logToFile("ERROR:" + message);
 				getLog().error(message);
 			}
-		});
+		};
+		logger.info("incremental:_" + buildContext.isIncremental());
+		generator.init(logger);
 
-		List<File> sourceFiles = new ArrayList<File>();
-		File javaDir = new File(baseDirectory, "src/main/java");
-		for (String source : sources) {
-			File sourceFile = new File(javaDir, source);
-			sourceFiles.add(sourceFile);
-		}
-		generator.loadSources(sourceFiles);
+		File javaDir = new File(basedir, "src/main/java");
 
+		generator.loadSources(Arrays.asList(javaDir));
+		org.codehaus.plexus.util.Scanner scanner = buildContext.newScanner(javaDir);
+		// code below is standard plexus Scanner stuff
+		scanner.setIncludes(new String[] { "**/*.java" });
+		scanner.scan();
+		String[] includedFiles = scanner.getIncludedFiles();
+		logger.info("Changed files: " + Arrays.toString(includedFiles));
 		generator.generate(outputDirectory);
 
+	}
+
+	private void logToFile(String message) {
+		try {
+			org.apache.commons.io.FileUtils.writeStringToFile(new File("c:/temp/gengen.log"), message + "\r\n", true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

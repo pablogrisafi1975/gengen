@@ -1,7 +1,11 @@
 package org.pgrisafi.gengen.generator;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -11,19 +15,22 @@ import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.codehaus.plexus.util.IOUtil;
 import org.pgrisafi.gengen.annotations.GenGenBuilder;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
-import com.thoughtworks.qdox.JavaDocBuilder;
-import com.thoughtworks.qdox.model.Annotation;
+import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.BeanProperty;
+import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
 
 public class Generator {
-	private JavaDocBuilder docBuilder;
+	private JavaProjectBuilder docBuilder;
 	private Logger logger;
+	private BuildContext buildContext;
 
 	public void init(Logger logger) {
-		docBuilder = new JavaDocBuilder();
+		docBuilder = new JavaProjectBuilder();
 		this.logger = logger;
 
 		try {
@@ -65,12 +72,26 @@ public class Generator {
 
 	public void generate(File outputFolder) {
 		for (JavaClass jc : docBuilder.getClasses()) {
-			generateBuilderFor(jc, outputFolder);
+			boolean hasDelta = true;
+			logger.info("Analizing class " + jc.getFullyQualifiedName());
+			URL sourceURL = jc.getSource().getURL();
+			try {
+				File sourceFile = new File(sourceURL.toURI());
+				if (!buildContext.hasDelta(sourceFile)) {
+					hasDelta = false;
+				}
+			} catch (URISyntaxException ex) {
+				logger.error("Class " + jc.getFullyQualifiedName() + " has a wrong url: " + jc.getSource().getURL(), ex);
+			}
+			if (hasDelta) {
+				generateBuilderFor(jc, outputFolder);
+			}
 		}
 	}
 
 	public void generateBuilderFor(JavaClass jc, File outputFolder) {
-		Annotation builderAnnotation = findAnnotation(jc.getAnnotations(), GenGenBuilder.class);
+		logger.info("Generating builder for class " + jc.getFullyQualifiedName());
+		JavaAnnotation builderAnnotation = findAnnotation(jc.getAnnotations(), GenGenBuilder.class);
 		if (builderAnnotation != null) {
 			validateProperClass(jc);
 			String templateName = "GenGenBuilder.vm";
@@ -94,32 +115,37 @@ public class Generator {
 			VelocityContext context = new VelocityContext();
 			context.put("packageName", packageName);
 			context.put("builderName", builderName);
-			context.put("resultClass", jc.asType().toString());
+			context.put("resultClass", jc.getFullyQualifiedName());
 
 			List<Field> fields = new LinkedList<Field>();
 			for (BeanProperty bp : jc.getBeanProperties(true)) {
 				if (!bp.getName().equals("class")) {
-					Field param = new Field(bp.getType().toGenericString(), bp.getName(), bp.getMutator() != null ? bp
-							.getMutator().getName() : "");
+					Field param = new Field(bp.getType().getFullyQualifiedName(), bp.getName(),
+							bp.getMutator() != null ? bp.getMutator().getName() : "");
 					fields.add(param);
 				}
 			}
 			context.put("fields", fields);
 
 			File pd = new File(outputFolder, packageName.replaceAll("\\.", "/"));
-			pd.mkdirs();
+			if (!pd.exists()) {
+				pd.mkdirs();
+			}
 
 			File javaFile = null;
 
 			try {
 
 				javaFile = new File(pd, builderName + ".java");
-				FileWriter out = new FileWriter(javaFile);
+				logger.info("Writing file " + javaFile.getAbsolutePath());
+				OutputStream javaFileOutputStream = buildContext.newFileOutputStream(javaFile);
+				Writer out = new OutputStreamWriter(javaFileOutputStream);
 				try {
 					template.merge(context, out);
 				} finally {
 					out.flush();
 					out.close();
+					IOUtil.close(javaFileOutputStream);
 				}
 			} catch (Exception ex) {
 				logger.error("Can not write file: " + javaFile.getAbsolutePath(), ex);
@@ -225,9 +251,9 @@ public class Generator {
 		}
 	}
 
-	private Annotation findAnnotation(Annotation[] annotations, Class<?> clazz) {
+	private JavaAnnotation findAnnotation(List<JavaAnnotation> annotations, Class<?> clazz) {
 		if (annotations != null) {
-			for (Annotation annotation : annotations) {
+			for (JavaAnnotation annotation : annotations) {
 				if (annotation.getType().getFullyQualifiedName().equals(clazz.getName())) {
 					return annotation;
 				}
@@ -235,6 +261,10 @@ public class Generator {
 		}
 		return null;
 
+	}
+
+	public void setBuildContext(BuildContext buildContext) {
+		this.buildContext = buildContext;
 	}
 
 }

@@ -13,18 +13,16 @@
 		<dependency>
 			<groupId>org.pgrisafi</groupId>
 			<artifactId>gengen-maven-plugin</artifactId>
-			<version>1.3</version>
+			<version>0.0.1.6-SNAPSHOT</version>
 			<scope>provided</scope>
-
 		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.pgrisafi</groupId>
 				<artifactId>gengen-maven-plugin</artifactId>
-				<version>1.3</version>
+				<version>0.0.1.6-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<configuration>

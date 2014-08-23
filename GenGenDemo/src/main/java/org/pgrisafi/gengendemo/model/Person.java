@@ -10,7 +10,6 @@ public class Person {
 	private String lastName;
 	private int age;
 	private Date birthDate;
-	private Long agggg;
 
 	public String getFirstName() {
 		return firstName;
@@ -42,14 +41,6 @@ public class Person {
 
 	public void setBirthDate(Date birthDate) {
 		this.birthDate = birthDate;
-	}
-
-	public Long getAgggg() {
-		return agggg;
-	}
-
-	public void setAgggg(Long agggg) {
-		this.agggg = agggg;
 	}
 
 }
