@@ -9,13 +9,16 @@
 
 	<property environment="env"/>
 	
+	<tstamp>
+		<format property="touch.time" pattern="yyyyMMddHHmmss" offset="0" unit="hour"/>
+	</tstamp>
+	
 	<target name="make" depends="build-gengendemo">
+		<echo message="created version 0.0.1.6-${touch.time}-SNAPSHOT" />
 	</target>
 	
 	<target name="update">
-		<tstamp>
-			<format property="touch.time" pattern="yyyyMMddHHmmss" offset="0" unit="hour"/>
-		</tstamp>
+		
 		<replaceregexp byline="true" encoding="UTF-8">
 			<regexp pattern="0\.0\.1\.6\-\d{14}-SNAPSHOT"/>
 			<substitution expression="0\.0\.1\.6\-${touch.time}\-SNAPSHOT"/>

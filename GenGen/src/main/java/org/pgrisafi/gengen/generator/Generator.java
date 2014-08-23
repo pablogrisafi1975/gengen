@@ -13,6 +13,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.log.NullLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.codehaus.plexus.util.IOUtil;
 import org.pgrisafi.gengen.annotations.GenGenBuilder;
@@ -36,6 +37,7 @@ public class Generator {
 
 			Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
 			Velocity.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+			Velocity.setProperty("runtime.log.logsystem.class", NullLogChute.class.getName());
 			Velocity.init();
 
 		} catch (Exception ex) {
@@ -140,84 +142,6 @@ public class Generator {
 			}
 
 		}
-
-		// for (JavaMethod m : jc.getMethods()) {
-		// if (m.isConstructor()) {
-		// if (builderAnnotation != null) {
-		// Boolean builderAbstract = (Boolean)
-		// builderAnnotation.getNamedParameter("abstract");
-		// if (builderAbstract == null) {
-		// builderAbstract = false;
-		// }
-		//
-		// String builderName = (String)
-		// builderAnnotation.getNamedParameter("name");
-		// if (builderName == null) {
-		// if (builderAbstract)
-		// builderName = "Abstract" + builderName;
-		// else
-		// builderName = builderName;
-		// }
-		//
-		// String createMethod = (String)
-		// builderAnnotation.getNamedParameter("createMethod");
-		// if (createMethod == null)
-		// createMethod = "create";
-		//
-		// String packageName = (String)
-		// builderAnnotation.getNamedParameter("package");
-		// if (packageName == null)
-		// packageName = packageName;
-		//
-		// String extendsClass = (String)
-		// builderAnnotation.getNamedParameter("extends");
-		//
-		// VelocityContext context = new VelocityContext();
-		// context.put("packageName", packageName);
-		// context.put("builderName", builderName);
-		// context.put("resultClass", jc.asType().toString());
-		// context.put("createMethod", createMethod);
-		// context.put("extendsClass", extendsClass);
-		//
-		// List<Field> ps = new LinkedList<Field>();
-		// List<Field> cs = new LinkedList<Field>();
-		// for (JavaParameter p : m.getParameters()) {
-		// Field param = new Field(p.getType().toGenericString(), p.getName());
-		// if (!p.getName().startsWith("_"))
-		// ps.add(param);
-		// cs.add(param);
-		// }
-		// context.put("parameters", ps);
-		// context.put("arguments", cs);
-		//
-		// File pd = new File(outputFolder, packageName.replaceAll("\\.", "/"));
-		// pd.mkdirs();
-		//
-		// File javaFile = null;
-		//
-		// try {
-		//
-		// javaFile = new File(pd, builderName + ".java");
-		// FileWriter out = new FileWriter(javaFile);
-		// try {
-		// template.merge(context, out);
-		// } finally {
-		// out.flush();
-		// out.close();
-		// }
-		// } catch (Exception ex) {
-		// logger.error("Can not write file: " + javaFile.getAbsolutePath(),
-		// ex);
-		// }
-		//
-		// // if (getLog().isDebugEnabled()) {
-		// // getLog().debug(builderName + ".java :");
-		// // // TODO: show
-		// // // getLog().debug(st.toString());
-		// // }
-		// }
-		// }
-		// }
 	}
 
 	private void validateProperClass(JavaClass jc) {
