@@ -6,7 +6,7 @@
 	<groupId>org.pgrisafi</groupId>
 	<artifactId>gengen-maven-plugin</artifactId>
 	<packaging>maven-plugin</packaging>
-	<version>0.0.1.6-20140823141930-SNAPSHOT</version>
+	<version>0.0.1.6-20140823144318-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -95,7 +95,7 @@
 		<dependency>
 			<groupId>org.apache.velocity</groupId>
 			<artifactId>velocity</artifactId>
-			<version>1.6.4</version>
+			<version>1.7</version>
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>

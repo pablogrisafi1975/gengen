@@ -1,6 +1,5 @@
-1 - update velocity version
-2 - remove remainings of annotation processor
-3 - include params and tools and guava and stringutils and caseutils
+3 - external log with parameters for where 
+4 - include params and tools and guava and stringutils and caseutils
 6 - generate a good model for classes ¿java-qdox-like?¿bean oriented? 
 7 - try non jre classes
 8 - human usable builder

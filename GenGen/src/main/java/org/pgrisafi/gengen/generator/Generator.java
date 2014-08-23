@@ -13,7 +13,6 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.codehaus.plexus.util.IOUtil;
 import org.pgrisafi.gengen.annotations.GenGenBuilder;
@@ -37,11 +36,6 @@ public class Generator {
 
 			Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
 			Velocity.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-			// Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER,
-			// "customclasspath");
-			// Velocity.setProperty("customclasspath.resource.loader.class",
-			// CustomClasspathResourceLoader.class.getName());
-
 			Velocity.init();
 
 		} catch (Exception ex) {
@@ -97,13 +91,7 @@ public class Generator {
 			String templateName = "GenGenBuilder.vm";
 			Template template;
 			try {
-				// template = Velocity.getTemplate("GenGenBuilder.vm");
-				template = new Template();
-				template.setResourceLoader(new CustomClasspathResourceLoader(logger));
-				template.setName(templateName);
-				template.setRuntimeServices(RuntimeSingleton.getRuntimeServices());
-				template.process();
-
+				template = Velocity.getTemplate("GenGenBuilder.vm");
 			} catch (Exception e) {
 				logger.error("Can not load template " + templateName, e);
 				throw new RuntimeException(e);

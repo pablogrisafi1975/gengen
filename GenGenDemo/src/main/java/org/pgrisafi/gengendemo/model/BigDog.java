@@ -7,8 +7,6 @@ public class BigDog extends Dog {
 
 	private int height;
 
-	private int height2;
-
 	public int getHeight() {
 		return height;
 	}

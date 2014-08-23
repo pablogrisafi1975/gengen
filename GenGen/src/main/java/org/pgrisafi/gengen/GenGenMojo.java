@@ -60,7 +60,7 @@ public class GenGenMojo extends AbstractMojo {
 				getLog().error(message);
 			}
 		};
-		logger.info("incremental:_" + buildContext.isIncremental());
+		logger.info("incremental:" + buildContext.isIncremental());
 		generator.init(logger);
 
 		File javaDir = new File(basedir, "src/main/java");
