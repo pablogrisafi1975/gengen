@@ -1,5 +1,6 @@
 3 - external log with parameters for where, including velocity
 4 - include params and tools and guava and stringutils and caseutils
+5 - automatically include generated sources
 6 - generate a good model for classes ¿java-qdox-like?¿bean oriented? 
 7 - try non jre classes
 8 - human usable builder

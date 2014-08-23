@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,16 +29,25 @@ public class GenGenMojo extends AbstractMojo {
 	private File basedir;
 
 	/**
+	 * @parameter
+	 */
+	String logFileName;
+
+	/**
 	 * @parameter default-value="target/generated-sources/gengen"
+	 * @readonly
 	 * @required
 	 */
-	File outputDirectory;
+	private File outputDirectory;
 
-	/** @component */
+	/**
+	 * @component
+	 */
 	private BuildContext buildContext;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		logToFile("logFileName:" + logFileName);
 		Generator generator = new Generator();
 		generator.setBuildContext(buildContext);
 		Logger logger = new Logger() {
@@ -78,9 +89,11 @@ public class GenGenMojo extends AbstractMojo {
 
 	private void logToFile(String message) {
 		try {
-			org.apache.commons.io.FileUtils.writeStringToFile(new File("c:/temp/gengen.log"), message + "\r\n", true);
+			if (StringUtils.isNotBlank(logFileName)) {
+				FileUtils.writeStringToFile(new File(logFileName), message + "\r\n", true);
+			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 }

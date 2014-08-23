@@ -13,7 +13,7 @@
 		<dependency>
 			<groupId>org.pgrisafi</groupId>
 			<artifactId>gengen-maven-plugin</artifactId>
-			<version>0.0.1.6-20140823145709-SNAPSHOT</version>
+			<version>0.0.1.6-20140823153003-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -22,15 +22,13 @@
 			<plugin>
 				<groupId>org.pgrisafi</groupId>
 				<artifactId>gengen-maven-plugin</artifactId>
-				<version>0.0.1.6-20140823145709-SNAPSHOT</version>
+				<version>0.0.1.6-20140823153003-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<configuration>
-							<sources>
-								<source>
-									org/pgrisafi/gengendemo/model
-								</source>
-							</sources>
+							<logFileName>
+								c:/temp/gengen.log
+							</logFileName>
 						</configuration>
 						<goals>
 							<goal>generate-sources</goal>

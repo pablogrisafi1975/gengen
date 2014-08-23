@@ -15,6 +15,7 @@
 	
 	<target name="make" depends="build-gengendemo">
 		<echo message="created version 0.0.1.6-${touch.time}-SNAPSHOT" />
+		<echo message="Go to Eclipse, save all files (Ctrl-Shift-S) and update project gengendemo (Alt-F5)" />
 	</target>
 	
 	<target name="update">
