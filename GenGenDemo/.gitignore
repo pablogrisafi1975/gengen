@@ -8,3 +8,4 @@ target
 */target
 jubb-core/src/test/tmp
 /target/
+/velocity.log

@@ -1,0 +1,53 @@
+<project name="GenGen" default="make" basedir=".">
+    <description>
+		We use this ant file to compile both plugin and demo projects
+		This ant files updates version with a timestamp, so we can create and install new version
+		to local repository. (If we keep the same version number ecplise does not allow you
+		to delete the file at the same time)
+        
+    </description>
+
+	<property environment="env"/>
+	
+	<target name="make" depends="build-gengendemo">
+	</target>
+	
+	<target name="update">
+		<tstamp>
+			<format property="touch.time" pattern="yyyyMMddHHmmss" offset="0" unit="hour"/>
+		</tstamp>
+		<replaceregexp byline="true" >
+			<regexp pattern="0\.0\.1\.6\-\d{14}-SNAPSHOT"/>
+			<substitution expression="0\.0\.1\.6\-${touch.time}\-SNAPSHOT"/>
+			<fileset dir=".">
+				<include name="**/pom.xml"/>
+			</fileset>
+		</replaceregexp>
+	</target>
+	
+	<target name="build-gengen-maven-plugin" depends="update">
+		<exec dir="gengen" executable="cmd">
+			<arg value="/c"/>
+			<arg value="${env.M2_HOME}\bin\mvn.bat"/>
+			<arg line="-e clean install" />
+		</exec>		
+	</target>
+	
+	<target name="deletelog" >
+		<delete file="c:\temp\gengen.log"/>
+	</target>	
+	
+	<target name="build-gengendemo" depends="build-gengen-maven-plugin, deletelog">
+		<exec dir="gengendemo" executable="cmd">
+			<arg value="/c"/>
+			<arg value="${env.M2_HOME}\bin\mvn.bat"/>
+			<arg line="-e clean install" />
+		</exec>	
+	</target>
+	
+	
+
+
+
+
+</project>

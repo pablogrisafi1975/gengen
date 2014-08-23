@@ -1,10 +1,7 @@
-0 - armar un batch/bash que compile todo junto
-1  - update velocity version
-2 - Arrelgar el resourceloader y saber cual es el código que funciona
-3 - Acomodar mejor invocaciones via annotation processor/maven
-4 - no invocar de gusto en annotation processor
-5 - no invocar de gusto en maven
-6 - generar un buen modelo ¿similar a el del qdox?¿bean oriented?
-7 - tener en cuenta classes no jre
+1 - update velocity version
+2 - remove remainings of annotation processor
+3 - include params and tools and guava and stringutils and caseutils
+6 - generate a good model for classes ¿java-qdox-like?¿bean oriented? 
+7 - try non jre classes
 8 - human usable builder
 9 - resource generator
