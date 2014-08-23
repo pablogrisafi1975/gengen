@@ -10,6 +10,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
 import org.pgrisafi.gengen.generator.Generator;
 import org.pgrisafi.gengen.generator.Logger;
 import org.sonatype.plexus.build.incremental.BuildContext;
@@ -44,6 +45,14 @@ public class GenGenMojo extends AbstractMojo {
 	 * @component
 	 */
 	private BuildContext buildContext;
+
+	/**
+	 * @parameter property="project"
+	 * @required
+	 * @readonly
+	 * @since 1.0
+	 */
+	private MavenProject project;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -84,6 +93,8 @@ public class GenGenMojo extends AbstractMojo {
 		String[] includedFiles = scanner.getIncludedFiles();
 		logger.info("Changed files: " + Arrays.toString(includedFiles));
 		generator.generate(outputDirectory);
+
+		project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
 
 	}
 

@@ -13,7 +13,7 @@
 		<dependency>
 			<groupId>org.pgrisafi</groupId>
 			<artifactId>gengen-maven-plugin</artifactId>
-			<version>0.0.1.6-20140823153003-SNAPSHOT</version>
+			<version>0.0.1.6-20140823162759-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -22,7 +22,7 @@
 			<plugin>
 				<groupId>org.pgrisafi</groupId>
 				<artifactId>gengen-maven-plugin</artifactId>
-				<version>0.0.1.6-20140823153003-SNAPSHOT</version>
+				<version>0.0.1.6-20140823162759-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<configuration>
@@ -33,24 +33,6 @@
 						<goals>
 							<goal>generate-sources</goal>
 						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.9</version>
-				<executions>
-					<execution>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>${project.build.directory}/generated-sources/gengen</source>
-							</sources>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
