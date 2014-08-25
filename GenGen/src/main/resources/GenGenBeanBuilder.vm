@@ -1,0 +1,52 @@
+#if ($params["builderPackage"] == "")
+package $clazz.package.name;
+#else
+#if ($params["builderPackage"].startsWith("."))
+package ${clazz.package.name}${params["builderPackage"]};
+#else
+package ${params["builderPackage"]};
+#end
+#end
+
+#set( $builderClassName = ${params["builderClassPrefix"]} + ${clazz.name} + ${params["builderClassSuffix"]} )
+/**
+	Builder for class $clazz.name<br/>
+	Automatically created with GenGen, using GenGenBeanBuilder<br>
+	Parameters:
+#foreach( $paramName in $params.keySet() )
+		$paramName : $params.get($paramName).toString()
+#end
+	
+*/
+public class $builderClassName{
+#foreach( $beanProperty in $clazz.getBeanProperties(true) )
+#if($beanProperty.name != "class")
+	private $beanProperty.type.fullyQualifiedName $beanProperty.name;
+#end
+#end
+
+	public static $builderClassName start(){
+		return new $builderClassName();
+	}
+	
+#foreach( $beanProperty in $clazz.getBeanProperties(true) )
+#if($beanProperty.name != "class")
+	public $builderClassName ${beanProperty.name}($beanProperty.type.fullyQualifiedName $beanProperty.name){
+		this.$beanProperty.name = $beanProperty.name;
+		return this;
+	}
+#end
+#end	
+
+	public $clazz.fullyQualifiedName build(){
+		$clazz.fullyQualifiedName obj = new ${clazz.fullyQualifiedName}();
+#foreach( $beanProperty in $clazz.getBeanProperties(true) )
+#if($beanProperty.name != "class")
+		obj.${beanProperty.mutator.name}(this.${beanProperty.name});
+#end
+#end
+		return obj;
+
+	}
+}
+

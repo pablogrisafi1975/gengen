@@ -7,6 +7,13 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
-public @interface GenGenBuilder {
+public @interface GenGenBeanBuilder {
+	String builderPackage() default "";
+
+	String builderClassPrefix() default "";
+
+	String builderClassSuffix() default "Builder";
+
+	String builderSetterPrefix() default "";
 
 }

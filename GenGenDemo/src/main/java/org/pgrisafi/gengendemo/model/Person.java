@@ -2,9 +2,9 @@ package org.pgrisafi.gengendemo.model;
 
 import java.util.Date;
 
-import org.pgrisafi.gengen.annotations.GenGenBuilder;
+import org.pgrisafi.gengen.annotations.GenGenBeanBuilder;
 
-@GenGenBuilder
+@GenGenBeanBuilder
 public class Person {
 	private String firstName;
 	private String lastName;

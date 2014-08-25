@@ -1,8 +1,8 @@
 package org.pgrisafi.gengendemo.model;
 
-import org.pgrisafi.gengen.annotations.GenGenBuilder;
+import org.pgrisafi.gengen.annotations.GenGenBeanBuilder;
 
-@GenGenBuilder
+@GenGenBeanBuilder(builderClassPrefix = "Prefix", builderClassSuffix = "Suffix", builderPackage = "org.pgrisafi.gengendemo.builders", builderSetterPrefix = "with")
 public class BigDog extends Dog {
 
 	private int height;

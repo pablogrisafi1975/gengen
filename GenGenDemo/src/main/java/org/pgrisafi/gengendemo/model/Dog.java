@@ -2,9 +2,9 @@ package org.pgrisafi.gengendemo.model;
 
 import java.math.BigDecimal;
 
-import org.pgrisafi.gengen.annotations.GenGenBuilder;
+import org.pgrisafi.gengen.annotations.GenGenBeanBuilder;
 
-@GenGenBuilder
+@GenGenBeanBuilder(builderPackage = ".builders")
 public class Dog {
 	private String petName;
 	private int age;

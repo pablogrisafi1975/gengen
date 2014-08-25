@@ -1,36 +1,44 @@
 package org.pgrisafi.gengen.generator;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.NullLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.codehaus.plexus.util.IOUtil;
-import org.pgrisafi.gengen.annotations.GenGenBuilder;
+import org.pgrisafi.gengen.annotations.GenGenBeanBuilder;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
+import com.google.common.collect.Maps;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.BeanProperty;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaSource;
 
 public class Generator {
-	private JavaProjectBuilder docBuilder;
+	private JavaProjectBuilder projectBuilder;
 	private Logger logger;
 	private BuildContext buildContext;
 
 	public void init(Logger logger) {
-		docBuilder = new JavaProjectBuilder();
+		projectBuilder = new JavaProjectBuilder();
 		this.logger = logger;
 
 		try {
@@ -54,10 +62,10 @@ public class Generator {
 			try {
 				if (source.isDirectory()) {
 					logger.info("Including folder and subfolders:" + source.getAbsolutePath());
-					docBuilder.addSourceTree(source);
+					projectBuilder.addSourceTree(source);
 				} else {
 					logger.info("Including file:" + source.getAbsolutePath());
-					docBuilder.addSource(source);
+					projectBuilder.addSource(source);
 				}
 			} catch (Exception ex) {
 				logger.error("Can not load source: " + source.getAbsolutePath(), ex);
@@ -67,7 +75,7 @@ public class Generator {
 	}
 
 	public void generate(File outputFolder) {
-		for (JavaClass jc : docBuilder.getClasses()) {
+		for (JavaClass jc : projectBuilder.getClasses()) {
 			boolean hasDelta = true;
 			logger.info("Analizing class " + jc.getFullyQualifiedName());
 			URL sourceURL = jc.getSource().getURL();
@@ -87,25 +95,44 @@ public class Generator {
 
 	public void generateBuilderFor(JavaClass jc, File outputFolder) {
 		logger.info("Generating builder for class " + jc.getFullyQualifiedName());
-		JavaAnnotation builderAnnotation = findAnnotation(jc.getAnnotations(), GenGenBuilder.class);
+		JavaAnnotation builderAnnotation = findAnnotation(jc.getAnnotations(), GenGenBeanBuilder.class);
 		if (builderAnnotation != null) {
 			validateProperClass(jc);
-			String templateName = "GenGenBuilder.vm";
+			String templateName = GenGenBeanBuilder.class.getSimpleName() + ".vm";
 			Template template;
 			try {
-				template = Velocity.getTemplate("GenGenBuilder.vm");
+				template = Velocity.getTemplate(templateName);
 			} catch (Exception e) {
 				logger.error("Can not load template " + templateName, e);
 				throw new RuntimeException(e);
 			}
 
-			String packageName = jc.getPackageName();
-			String builderName = jc.getName() + "Builder";
-
 			VelocityContext context = new VelocityContext();
-			context.put("packageName", packageName);
-			context.put("builderName", builderName);
-			context.put("resultClass", jc.getFullyQualifiedName());
+
+			Map<String, Object> params = Maps.newHashMap();
+			for (Method method : GenGenBeanBuilder.class.getDeclaredMethods()) {
+				String name = method.getName();
+				if (builderAnnotation.getNamedParameterMap().containsKey(name)) {
+					Object paramValue = builderAnnotation.getNamedParameter(name);
+					/*
+					 * For some reason qdox gives you the String literal, not
+					 * the string value That is to say, surrounded by quotes.
+					 * You get >"with"< instead of >with< So if value is a
+					 * String, remove quotes
+					 */
+					if (paramValue instanceof String) {
+						String valueWithQuotes = (String) paramValue;
+						params.put(name, valueWithQuotes.substring(1, valueWithQuotes.length() - 1));
+					} else {
+						params.put(name, paramValue);
+					}
+				} else {
+					params.put(name, method.getDefaultValue());
+				}
+			}
+
+			context.put("params", params);
+			context.put("clazz", jc);
 
 			List<Field> fields = new LinkedList<Field>();
 			for (BeanProperty bp : jc.getBeanProperties(true)) {
@@ -117,31 +144,47 @@ public class Generator {
 			}
 			context.put("fields", fields);
 
-			File pd = new File(outputFolder, packageName.replaceAll("\\.", "/"));
+			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+			Writer writer = new OutputStreamWriter(byteArrayOutputStream);
+			try {
+				template.merge(context, writer);
+				writer.flush();
+			} catch (IOException e) {
+				logger.error("Can not generate for class: " + jc, e);
+			}
+			byte[] inMemoryClassFile = byteArrayOutputStream.toByteArray();
+
+			JavaSource javaSource = projectBuilder.addSource(new InputStreamReader(new ByteArrayInputStream(
+					inMemoryClassFile)));
+
+			File pd = new File(outputFolder, javaSource.getPackageName().replaceAll("\\.", "/"));
 			if (!pd.exists()) {
 				pd.mkdirs();
 			}
 
-			File javaFile = null;
-
+			File javaFile = new File(pd, getPublicClassName(javaSource) + ".java");
+			logger.info("Writing file " + javaFile.getAbsolutePath());
+			OutputStream outputStream = null;
 			try {
-
-				javaFile = new File(pd, builderName + ".java");
-				logger.info("Writing file " + javaFile.getAbsolutePath());
-				OutputStream javaFileOutputStream = buildContext.newFileOutputStream(javaFile);
-				Writer out = new OutputStreamWriter(javaFileOutputStream);
-				try {
-					template.merge(context, out);
-				} finally {
-					out.flush();
-					out.close();
-					IOUtil.close(javaFileOutputStream);
-				}
+				outputStream = buildContext.newFileOutputStream(javaFile);
+				IOUtils.copy(new ByteArrayInputStream(inMemoryClassFile), outputStream);
+				outputStream.flush();
 			} catch (Exception ex) {
 				logger.error("Can not write file: " + javaFile.getAbsolutePath(), ex);
+			} finally {
+				IOUtils.closeQuietly(outputStream);
 			}
 
 		}
+	}
+
+	private String getPublicClassName(JavaSource javaSource) {
+		for (JavaClass javaClass : javaSource.getClasses()) {
+			if (javaClass.isPublic()) {
+				return javaClass.getName();
+			}
+		}
+		return null;
 	}
 
 	private void validateProperClass(JavaClass jc) {
