@@ -10,9 +10,21 @@ package ${params["builderPackage"]};
 
 #set( $builderClassName = ${params["builderClassPrefix"]} + ${clazz.name} + ${params["builderClassSuffix"]} )
 /**
-	Builder for class $clazz.name<br/>
+	Builder for class {@link $clazz.fullyQualifiedName}<br/>
 	Automatically created with GenGen, using GenGenBeanBuilder<br>
-	Parameters:
+	You can use it with a new instance, like <br/>
+	<code>
+	${clazz.name} ${stringUtils.uncapitalize($clazz.name)} = new ${builderClassName}()......build();
+	</code>
+	<br/>
+	or with the static method <code>start</code>, like <br/>
+	<code>
+	${clazz.name} ${stringUtils.uncapitalize($clazz.name)} = ${builderClassName}.start().....build();
+	</code>
+	
+*/
+/*
+	Used parameters:
 #foreach( $paramName in $params.keySet() )
 		$paramName : $params.get($paramName).toString()
 #end
@@ -20,7 +32,7 @@ package ${params["builderPackage"]};
 */
 public class $builderClassName{
 #foreach( $beanProperty in $clazz.getBeanProperties(true) )
-#if($beanProperty.name != "class")
+#if($beanProperty.mutator)
 	private $beanProperty.type.fullyQualifiedName $beanProperty.name;
 #end
 #end
@@ -30,8 +42,8 @@ public class $builderClassName{
 	}
 	
 #foreach( $beanProperty in $clazz.getBeanProperties(true) )
-#if($beanProperty.name != "class")
-	public $builderClassName ${beanProperty.name}($beanProperty.type.fullyQualifiedName $beanProperty.name){
+#if($beanProperty.mutator)
+	public $builderClassName #builderSetter(${beanProperty.name})($beanProperty.type.fullyQualifiedName $beanProperty.name){
 		this.$beanProperty.name = $beanProperty.name;
 		return this;
 	}
@@ -39,14 +51,18 @@ public class $builderClassName{
 #end	
 
 	public $clazz.fullyQualifiedName build(){
-		$clazz.fullyQualifiedName obj = new ${clazz.fullyQualifiedName}();
+		$clazz.fullyQualifiedName ${stringUtils.uncapitalize($clazz.name)} = new ${clazz.fullyQualifiedName}();
 #foreach( $beanProperty in $clazz.getBeanProperties(true) )
-#if($beanProperty.name != "class")
-		obj.${beanProperty.mutator.name}(this.${beanProperty.name});
+#if($beanProperty.mutator)
+		${stringUtils.uncapitalize($clazz.name)}.${beanProperty.mutator.name}(this.${beanProperty.name});
 #end
 #end
-		return obj;
+		return ${stringUtils.uncapitalize($clazz.name)};
 
 	}
 }
+
+#macro( builderSetter $fieldName )
+#if($params["builderSetterPrefix"] == "")${fieldName}#else${params["builderSetterPrefix"]}${stringUtils.capitalize($fieldName)}#end
+#end
 

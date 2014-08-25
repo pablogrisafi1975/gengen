@@ -1,6 +1,7 @@
 package org.pgrisafi.gengendemo.model;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 
 import org.pgrisafi.gengen.annotations.GenGenBeanBuilder;
 
@@ -11,6 +12,7 @@ public class Dog {
 	private Integer size;
 	private BigDecimal fleas;
 	private Long attitude;
+	private Calendar what;
 
 	public String getPetName() {
 		return petName;
@@ -50,6 +52,14 @@ public class Dog {
 
 	public void setAttitude(Long attitude) {
 		this.attitude = attitude;
+	}
+
+	public Calendar getWhat() {
+		return null;
+	}
+
+	public void setWhat(Calendar what) {
+		this.what = what;
 	}
 
 }

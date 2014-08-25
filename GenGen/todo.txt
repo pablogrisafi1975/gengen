@@ -1,5 +1,4 @@
-4 - include params and tools and guava and stringutils and caseutils
-6 - generate a good model for classes ¿java-qdox-like?¿bean oriented? 
+6 - value builder
 7 - try non jre classes
 8 - human usable builder
 9 - resource generator

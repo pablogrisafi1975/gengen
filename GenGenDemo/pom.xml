@@ -13,7 +13,7 @@
 		<dependency>
 			<groupId>org.pgrisafi</groupId>
 			<artifactId>gengen-maven-plugin</artifactId>
-			<version>0.0.1.6-20140824221031-SNAPSHOT</version>
+			<version>0.0.1.6-20140824230240-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -22,7 +22,7 @@
 			<plugin>
 				<groupId>org.pgrisafi</groupId>
 				<artifactId>gengen-maven-plugin</artifactId>
-				<version>0.0.1.6-20140824221031-SNAPSHOT</version>
+				<version>0.0.1.6-20140824230240-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<configuration>

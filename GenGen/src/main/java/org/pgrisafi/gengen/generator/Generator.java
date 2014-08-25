@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -133,6 +134,7 @@ public class Generator {
 
 			context.put("params", params);
 			context.put("clazz", jc);
+			context.put("stringUtils", new StringUtils());
 
 			List<Field> fields = new LinkedList<Field>();
 			for (BeanProperty bp : jc.getBeanProperties(true)) {
