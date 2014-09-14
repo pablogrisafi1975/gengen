@@ -11,7 +11,6 @@ import java.io.Writer;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +27,6 @@ import org.sonatype.plexus.build.incremental.BuildContext;
 
 import com.google.common.collect.Maps;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import com.thoughtworks.qdox.model.BeanProperty;
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaSource;
@@ -136,16 +134,6 @@ public class Generator {
 			context.put("clazz", jc);
 			context.put("stringUtils", new StringUtils());
 
-			List<Field> fields = new LinkedList<Field>();
-			for (BeanProperty bp : jc.getBeanProperties(true)) {
-				if (!bp.getName().equals("class")) {
-					Field param = new Field(bp.getType().getFullyQualifiedName(), bp.getName(),
-							bp.getMutator() != null ? bp.getMutator().getName() : "");
-					fields.add(param);
-				}
-			}
-			context.put("fields", fields);
-
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			Writer writer = new OutputStreamWriter(byteArrayOutputStream);
 			try {
@@ -191,19 +179,19 @@ public class Generator {
 
 	private void validateProperClass(JavaClass jc) {
 		if (jc.isInterface()) {
-			logger.error("Can not use annotation GenGenBuilder in interface: " + jc.getFullyQualifiedName());
+			logger.error("Can not use annotation GenGenBeanBuilder in interface: " + jc.getFullyQualifiedName());
 			throw new RuntimeException();
 		}
 		if (jc.isEnum()) {
-			logger.error("Can not use annotation GenGenBuilder in enum: " + jc.getFullyQualifiedName());
+			logger.error("Can not use annotation GenGenBeanBuilder in enum: " + jc.getFullyQualifiedName());
 			throw new RuntimeException();
 		}
 		if (jc.isAbstract()) {
-			logger.error("Can not use annotation GenGenBuilder in abstract class: " + jc.getFullyQualifiedName());
+			logger.error("Can not use annotation GenGenBeanBuilder in abstract class: " + jc.getFullyQualifiedName());
 			throw new RuntimeException();
 		}
 		if (jc.isInner()) {
-			logger.error("Can not use annotation GenGenBuilder in inner class: " + jc.getFullyQualifiedName());
+			logger.error("Can not use annotation GenGenBeanBuilder in inner class: " + jc.getFullyQualifiedName());
 			throw new RuntimeException();
 		}
 	}
