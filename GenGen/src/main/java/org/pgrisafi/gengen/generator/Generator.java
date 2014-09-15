@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,11 @@ import org.apache.velocity.app.Velocity;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.NullLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.pgrisafi.gengen.annotations.GenGenBeanBuilder;
+import org.pgrisafi.gengen.annotations.GenGenAnnotation;
+import org.pgrisafi.gengen.validation.JavaClassValidator;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaAnnotation;
@@ -74,30 +77,68 @@ public class Generator {
 	}
 
 	public void generate(File outputFolder) {
-		for (JavaClass jc : projectBuilder.getClasses()) {
+		for (JavaClass javaClass : projectBuilder.getClasses()) {
 			boolean hasDelta = true;
-			logger.info("Analizing class " + jc.getFullyQualifiedName());
-			URL sourceURL = jc.getSource().getURL();
+			logger.info("Analizing class " + javaClass.getFullyQualifiedName());
+			URL sourceURL = javaClass.getSource().getURL();
 			try {
 				File sourceFile = new File(sourceURL.toURI());
 				if (!buildContext.hasDelta(sourceFile)) {
 					hasDelta = false;
 				}
 			} catch (URISyntaxException ex) {
-				logger.error("Class " + jc.getFullyQualifiedName() + " has a wrong url: " + jc.getSource().getURL(), ex);
+				logger.error("Class " + javaClass.getFullyQualifiedName() + " has a wrong url: "
+						+ javaClass.getSource().getURL(), ex);
 			}
 			if (hasDelta) {
-				generateBuilderFor(jc, outputFolder);
+				List<Class<?>> genGenAnnotations = findGenGenAnnotations(javaClass);
+				for (Class<?> genGenAnnotation : genGenAnnotations) {
+					generateCodeFor(javaClass, outputFolder, genGenAnnotation);
+				}
 			}
 		}
 	}
 
-	public void generateBuilderFor(JavaClass jc, File outputFolder) {
-		logger.info("Generating builder for class " + jc.getFullyQualifiedName());
-		JavaAnnotation builderAnnotation = findAnnotation(jc.getAnnotations(), GenGenBeanBuilder.class);
-		if (builderAnnotation != null) {
-			validateProperClass(jc);
-			String templateName = GenGenBeanBuilder.class.getSimpleName() + ".vm";
+	private List<Class<?>> findGenGenAnnotations(JavaClass javaClass) {
+		logger.info("Looking for annotations in class " + javaClass + " list:" + javaClass.getAnnotations());
+		List<Class<?>> genGenAnnotations = Lists.newArrayList();
+
+		for (JavaAnnotation javaAnnotation : javaClass.getAnnotations()) {
+			Class<?> javaAnnotationClass = null;
+			try {
+				javaAnnotationClass = Class.forName(javaAnnotation.getType().getCanonicalName());
+			} catch (ClassNotFoundException ex) {
+				logger.error("Class " + javaClass.getFullyQualifiedName() + " has annotation : " + javaAnnotation
+						+ " that can not be loaded", ex);
+			}
+			logger.info("Annotations in annotation class " + javaAnnotationClass + " list:"
+					+ Arrays.toString(javaAnnotationClass.getAnnotations()));
+			if (javaAnnotationClass.isAnnotationPresent(GenGenAnnotation.class)) {
+				logger.info("Using " + javaAnnotationClass);
+				genGenAnnotations.add(javaAnnotationClass);
+			}
+		}
+		return genGenAnnotations;
+	}
+
+	public void generateCodeFor(JavaClass javaClass, File outputFolder, Class<?> gengenAnnotationClass) {
+		logger.info("Generating code for class " + javaClass.getFullyQualifiedName() + " using annotation "
+				+ gengenAnnotationClass.getCanonicalName());
+		JavaAnnotation annotation = findGenGenAnnotation(javaClass.getAnnotations(), gengenAnnotationClass);
+		if (annotation != null) {
+			GenGenAnnotation genGenAnnotation = gengenAnnotationClass.getAnnotation(GenGenAnnotation.class);
+			Class<? extends JavaClassValidator> javaClassValidatorClass = genGenAnnotation.javaClassValidator();
+			JavaClassValidator javaClassValidator = null;
+			try {
+				javaClassValidator = javaClassValidatorClass.newInstance();
+			} catch (Exception ex) {
+				logger.error("Can not instanciate validator " + javaClassValidatorClass.getCanonicalName(), ex);
+				throw new RuntimeException(ex);
+			}
+
+			javaClassValidator.validate(javaClass, logger);
+
+			String templateName = gengenAnnotationClass.getSimpleName() + ".vm";
 			Template template;
 			try {
 				template = Velocity.getTemplate(templateName);
@@ -109,10 +150,10 @@ public class Generator {
 			VelocityContext context = new VelocityContext();
 
 			Map<String, Object> params = Maps.newHashMap();
-			for (Method method : GenGenBeanBuilder.class.getDeclaredMethods()) {
+			for (Method method : gengenAnnotationClass.getDeclaredMethods()) {
 				String name = method.getName();
-				if (builderAnnotation.getNamedParameterMap().containsKey(name)) {
-					Object paramValue = builderAnnotation.getNamedParameter(name);
+				if (annotation.getNamedParameterMap().containsKey(name)) {
+					Object paramValue = annotation.getNamedParameter(name);
 					/*
 					 * For some reason qdox gives you the String literal, not
 					 * the string value That is to say, surrounded by quotes.
@@ -131,7 +172,7 @@ public class Generator {
 			}
 
 			context.put("params", params);
-			context.put("clazz", jc);
+			context.put("clazz", javaClass);
 			context.put("stringUtils", new StringUtils());
 
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -140,7 +181,7 @@ public class Generator {
 				template.merge(context, writer);
 				writer.flush();
 			} catch (IOException e) {
-				logger.error("Can not generate for class: " + jc, e);
+				logger.error("Can not generate for class: " + javaClass, e);
 			}
 			byte[] inMemoryClassFile = byteArrayOutputStream.toByteArray();
 
@@ -177,29 +218,10 @@ public class Generator {
 		return null;
 	}
 
-	private void validateProperClass(JavaClass jc) {
-		if (jc.isInterface()) {
-			logger.error("Can not use annotation GenGenBeanBuilder in interface: " + jc.getFullyQualifiedName());
-			throw new RuntimeException();
-		}
-		if (jc.isEnum()) {
-			logger.error("Can not use annotation GenGenBeanBuilder in enum: " + jc.getFullyQualifiedName());
-			throw new RuntimeException();
-		}
-		if (jc.isAbstract()) {
-			logger.error("Can not use annotation GenGenBeanBuilder in abstract class: " + jc.getFullyQualifiedName());
-			throw new RuntimeException();
-		}
-		if (jc.isInner()) {
-			logger.error("Can not use annotation GenGenBeanBuilder in inner class: " + jc.getFullyQualifiedName());
-			throw new RuntimeException();
-		}
-	}
-
-	private JavaAnnotation findAnnotation(List<JavaAnnotation> annotations, Class<?> clazz) {
-		if (annotations != null) {
-			for (JavaAnnotation annotation : annotations) {
-				if (annotation.getType().getFullyQualifiedName().equals(clazz.getName())) {
+	private JavaAnnotation findGenGenAnnotation(List<JavaAnnotation> allAnnotations, Class<?> annotationClass) {
+		if (allAnnotations != null) {
+			for (JavaAnnotation annotation : allAnnotations) {
+				if (annotation.getType().getFullyQualifiedName().equals(annotationClass.getName())) {
 					return annotation;
 				}
 			}

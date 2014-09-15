@@ -5,6 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.pgrisafi.gengen.validation.BeanBuilderValidator;
+
+@GenGenAnnotation(javaClassValidator = BeanBuilderValidator.class)
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface GenGenBeanBuilder {
